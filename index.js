@@ -1,11 +1,13 @@
 var express = require("express");
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// parse application/json
+app.use(bodyParser.json());
 var port = process.env.PORT || 3000;
 var app = express();
 app.post("/", function (req, res) {
-  console.log(
-    "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    req
-  );
+  console.log(req);
   res.send("res");
 });
 app.listen(port, function () {
