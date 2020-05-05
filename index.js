@@ -4,7 +4,7 @@ var app = express();
 app.post("/", function (req, res) {
   console.log(
     "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
-    res
+    req
   );
   res.send("res");
 });
