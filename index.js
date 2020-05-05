@@ -11,6 +11,10 @@ app.post("/", function (req, res) {
   console.log(req);
   res.send("res");
 });
+app.get("/a", function (req, res) {
+  //console.log(req);
+  res.send("get");
+});
 app.listen(port, function () {
   console.log(`Example app listening on port !`);
 });
