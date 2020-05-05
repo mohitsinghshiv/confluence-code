@@ -1,4 +1,5 @@
 var express = require("express");
+const algoliasearch = require("algoliasearch");
 const bodyParser = require("body-parser");
 const axios = require("axios").default;
 const rp = require("request-promise-native");
