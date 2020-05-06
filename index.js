@@ -1,10 +1,13 @@
 var express = require("express");
 const algoliasearch = require("algoliasearch");
+const cors = require("cors");
+
 const bodyParser = require("body-parser");
 const striptags = require("striptags");
 const axios = require("axios").default;
 const rp = require("request-promise-native");
 var app = express();
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(bodyParser.json());
@@ -293,7 +296,6 @@ const checkWebhook = async (url, username, password) => {
 
 //--------
 app.post("/addIsuue", (req, res) => {
-  console.log("add issue");
   const projects = req.body;
   const record = {};
   record.IssueId = projects.issue.id;
@@ -305,11 +307,8 @@ app.post("/addIsuue", (req, res) => {
   record.objectID = projects.issue.id;
 
   const records = [record];
-  console.log(records);
   const index = client.initIndex("Isses_NAME");
-  console.log("index----", index);
   const x = index.saveObjects(records);
-  console.log("----", x);
 });
 
 app.listen(port, function () {
