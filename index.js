@@ -301,8 +301,8 @@ const checkWebhook = async (url, username, password) => {
     });
 };
 
-//--------
 app.post("/addIsuue", (req, res) => {
+  console.log("addIsuue");
   const projects = req.body;
   const record = {};
   record.IssueId = projects.issue.id;
@@ -312,10 +312,9 @@ app.post("/addIsuue", (req, res) => {
   record.Description = projects.issue.fields.description;
   record.Project = projects.issue.fields.project;
   record.objectID = projects.issue.id;
-
   const records = [record];
   const index = client.initIndex("jira_index");
-  const x = index.saveObjects(records);
+  index.saveObjects(records);
 });
 
 app.listen(port, function () {
