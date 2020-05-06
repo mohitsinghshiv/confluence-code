@@ -171,7 +171,7 @@ async function pushData(records) {
       .catch((e) => console.log(e));
   }
 }
-app.get("/confluenceAuth", async function (req, res) {
+app.post("/confluenceAuth", async function (req, res) {
   if (
     req.body.host == null ||
     req.body.username == null ||
