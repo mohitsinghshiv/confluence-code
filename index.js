@@ -93,7 +93,7 @@ app.post("/", function (req, res) {
   console.log(req);
   res.send("res");
 });
-app.post("/c", async function (req, res) {
+app.post("/confluenceUpdateData", async function (req, res) {
   try {
     const index = client.initIndex("demoConfluence");
     if (
@@ -127,7 +127,7 @@ app.post("/c", async function (req, res) {
       .json({ message: "Unauthorized Error" });
   }
 });
-app.post("/g", async function (req, res) {
+app.post("/pushGoogleData", async function (req, res) {
   console.log("req.body.access_token", req.body.access_token);
   const options = {
     method: "GET",
@@ -168,7 +168,7 @@ async function pushData(records) {
       .catch((e) => console.log(e));
   }
 }
-app.get("/a", async function (req, res) {
+app.get("/confluenceAuth", async function (req, res) {
   if (
     req.body.host == null ||
     req.body.username == null ||
@@ -212,7 +212,7 @@ app.get("/a", async function (req, res) {
     });
 });
 
-app.post("/auth", async function (req, res) {
+app.post("/jiraAuth", async function (req, res) {
   const url = req.body.url;
   const username = req.body.username;
   const password = req.body.password;
