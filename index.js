@@ -5,22 +5,14 @@ const bodyParser = require("body-parser");
 const striptags = require("striptags");
 const axios = require("axios").default;
 const rp = require("request-promise-native");
-const config = require("./config");
-
 var app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
+
 app.use(bodyParser.json());
+
 var port = process.env.PORT || 3001;
-const {
-  algoliaApiKey,
-  algoliaId,
-  confluenceIndexName,
-  googleIndexName,
-  jiraIndexName,
-  jiraWebHookurl,
-} = config;
-const client = algoliasearch(algoliaId, algoliaApiKey);
+const client = algoliasearch("8T0SCTM0G1", "c97b64840d1a151f9dd8056d5aa1941e");
 
 function confluenceGet(obj) {
   return rp({
@@ -105,7 +97,7 @@ app.post("/", function (req, res) {
 });
 app.post("/confluenceUpdateData", async function (req, res) {
   try {
-    const index = client.initIndex(confluenceIndexName);
+    const index = client.initIndex("conflu_index");
     if (
       req.body.host == null ||
       req.body.username == null ||
@@ -159,7 +151,7 @@ app.post("/pushGoogleData", async function (req, res) {
 });
 
 async function pushData(records, userid) {
-  const index = client.initIndex(googleIndexName);
+  const index = client.initIndex("google_index"); //dev_NAME
   records.map((record) => {
     record.objectID = record.id;
     record.userid = userid;
@@ -258,7 +250,7 @@ app.post("/jiraAuth", async function (req, res) {
 const createWebhook = async (url, username, password) => {
   const data = {
     name: "This is default webhook ",
-    url: jiraWebHookurl + "/addIsuue",
+    url: "https://algoliaproject.herokuapp.com/addIsuue",
     events: ["jira:issue_created", "jira:issue_updated"],
     jqlFilter: "Project = JRA AND resolution = Fixed",
     excludeIssueDetails: false,
@@ -293,7 +285,7 @@ const checkWebhook = async (url, username, password) => {
       const webhooks = responce.data;
       let flag = false;
       webhooks.map((hook) => {
-        if (hook.url === jiraWebHookurl + "/addIsuue") {
+        if (hook.url === "https://algoliaproject.herokuapp.com/addIsuue") {
           console.log(hook.url);
           flag = true;
         }
@@ -309,6 +301,7 @@ const checkWebhook = async (url, username, password) => {
     });
 };
 
+//--------
 app.post("/addIsuue", (req, res) => {
   const projects = req.body;
   const record = {};
@@ -319,10 +312,10 @@ app.post("/addIsuue", (req, res) => {
   record.Description = projects.issue.fields.description;
   record.Project = projects.issue.fields.project;
   record.objectID = projects.issue.id;
+
   const records = [record];
-  const index = client.initIndex(jiraIndexName);
-  console.log("index:>", index);
-  index.saveObjects(records);
+  const index = client.initIndex("jira_index");
+  const x = index.saveObjects(records);
 });
 
 app.listen(port, function () {
