@@ -1,18 +1,26 @@
 var express = require("express");
 const algoliasearch = require("algoliasearch");
 const cors = require("cors");
-
 const bodyParser = require("body-parser");
 const striptags = require("striptags");
 const axios = require("axios").default;
 const rp = require("request-promise-native");
+const config = require("./config");
+
 var app = express();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
-
 app.use(bodyParser.json());
-var port = process.env.PORT || 3000;
-const client = algoliasearch("1BG45YLJO5", "38a1d2a23ed5658bd4e874e45074a2ce");
+var port = process.env.PORT || 3001;
+const {
+  algoliaApiKey,
+  algoliaId,
+  confluenceIndexName,
+  googleIndexName,
+  jiraIndexName,
+  jiraWebHookurl,
+} = config;
+const client = algoliasearch(algoliaId, algoliaApiKey);
 
 function confluenceGet(obj) {
   return rp({
@@ -97,7 +105,7 @@ app.post("/", function (req, res) {
 });
 app.post("/confluenceUpdateData", async function (req, res) {
   try {
-    const index = client.initIndex("demoConfluence");
+    const index = client.initIndex(confluenceIndexName);
     if (
       req.body.host == null ||
       req.body.username == null ||
@@ -140,7 +148,7 @@ app.post("/pushGoogleData", async function (req, res) {
   };
   await axios(options)
     .then((responce) => {
-      pushData(responce.data.files);
+      pushData(responce.data.files, req.body.userid);
       return res.status(200).json({ message: "success" });
     })
     .catch((err) => {
@@ -150,20 +158,36 @@ app.post("/pushGoogleData", async function (req, res) {
     });
 });
 
-async function pushData(records) {
-  const index = client.initIndex("Newdemo");
+async function pushData(records, userid) {
+  const index = client.initIndex(googleIndexName);
   records.map((record) => {
     record.objectID = record.id;
-    record.image =
-      "https://cdn4.iconfinder.com/data/icons/free-colorful-icons/360/google_docs.png";
+    record.userid = userid;
+    if (record.mimeType === "application/vnd.google-apps.document")
+      record.image =
+        "https://cdn4.iconfinder.com/data/icons/free-colorful-icons/360/google_docs.png";
+    else if (record.mimeType === "application/vnd.google-apps.presentation")
+      record.image =
+        "https://cdn3.iconfinder.com/data/icons/logos-brands-3/24/logo_brand_brands_logos_google_slides-512.png";
+    else if (record.mimeType === "application/vnd.google-apps.spreadsheet")
+      record.image =
+        "https://cdn2.iconfinder.com/data/icons/leto-blue-big-data/64/big_data_data_volume-512.png";
+    else if (record.mimeType === "application/pdf")
+      record.image =
+        "https://cdn4.iconfinder.com/data/icons/document-paper-file/32/pdf-512.png";
+    else
+      record.image =
+        "https://cdn2.iconfinder.com/data/icons/files-solid/64/multiple-file-question-unknown-miscellaneous-512.png";
   });
+
   for (var i = 0; i < records.length; i++) {
     var r = [];
     r.push(records[i]);
-    return index
+    index
       .saveObjects(r)
       .then(({ objectIDs }) => {
-        return objectIDs;
+        //return objectIDs;
+        console.log(objectIDs);
       })
       .catch((e) => console.log(e));
   }
@@ -234,7 +258,7 @@ app.post("/jiraAuth", async function (req, res) {
 const createWebhook = async (url, username, password) => {
   const data = {
     name: "This is default webhook ",
-    url: "https://algoliaproject.herokuapp.com/addIsuue",
+    url: jiraWebHookurl,
     events: ["jira:issue_created", "jira:issue_updated"],
     jqlFilter: "Project = JRA AND resolution = Fixed",
     excludeIssueDetails: false,
@@ -269,7 +293,7 @@ const checkWebhook = async (url, username, password) => {
       const webhooks = responce.data;
       let flag = false;
       webhooks.map((hook) => {
-        if (hook.url === "https://algoliaproject.herokuapp.com/addIsuue") {
+        if (hook.url === jiraWebHookurl) {
           console.log(hook.url);
           flag = true;
         }
@@ -298,7 +322,7 @@ app.post("/addIsuue", (req, res) => {
   record.objectID = projects.issue.id;
 
   const records = [record];
-  const index = client.initIndex("Isses_NAME");
+  const index = client.initIndex(jiraIndexName);
   const x = index.saveObjects(records);
 });
 
