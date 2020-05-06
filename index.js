@@ -258,7 +258,7 @@ app.post("/jiraAuth", async function (req, res) {
 const createWebhook = async (url, username, password) => {
   const data = {
     name: "This is default webhook ",
-    url: jiraWebHookurl,
+    url: jiraWebHookurl + "/addIsuue",
     events: ["jira:issue_created", "jira:issue_updated"],
     jqlFilter: "Project = JRA AND resolution = Fixed",
     excludeIssueDetails: false,
@@ -293,7 +293,7 @@ const checkWebhook = async (url, username, password) => {
       const webhooks = responce.data;
       let flag = false;
       webhooks.map((hook) => {
-        if (hook.url === jiraWebHookurl) {
+        if (hook.url === jiraWebHookurl + "/addIsuue") {
           console.log(hook.url);
           flag = true;
         }
