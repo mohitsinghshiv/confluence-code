@@ -93,7 +93,6 @@ function parseDocuments(documents, obj) {
 }
 
 app.post("/", function (req, res) {
-  console.log(req);
   res.send("res");
 });
 app.post("/confluenceUpdateData", async function (req, res) {
@@ -131,7 +130,6 @@ app.post("/confluenceUpdateData", async function (req, res) {
   }
 });
 app.post("/pushGoogleData", async function (req, res) {
-  console.log("req.body.access_token", req.body.access_token);
   const options = {
     method: "GET",
     url: "https://www.googleapis.com/drive/v3/files",
@@ -142,7 +140,6 @@ app.post("/pushGoogleData", async function (req, res) {
   };
   await axios(options)
     .then((responce) => {
-      console.log("success");
       pushData(responce.data.files);
       return res.status(200).json({ message: "success" });
     })
@@ -205,7 +202,6 @@ app.post("/confluenceAuth", async function (req, res) {
     json: true,
   })
     .then((responce) => {
-      console.log("success");
       return res.status(200).json({ message: "success" });
     })
     .catch((err) => {
@@ -227,7 +223,6 @@ app.post("/jiraAuth", async function (req, res) {
   };
   await axios(options)
     .then(function (responce) {
-      console.log("success");
       checkWebhook(url, username, password);
       return res.status(200).json({ greeting: "success" });
     })
@@ -237,10 +232,9 @@ app.post("/jiraAuth", async function (req, res) {
 });
 
 const createWebhook = async (url, username, password) => {
-  console.log("create web -" + username);
   const data = {
     name: "This is default webhook ",
-    url: "https://nameless-cove-12952.herokuapp.com/addIsuue",
+    url: "https://algoliaproject.herokuapp.com/addIsuue",
     events: ["jira:issue_created", "jira:issue_updated"],
     jqlFilter: "Project = JRA AND resolution = Fixed",
     excludeIssueDetails: false,
@@ -264,7 +258,6 @@ const createWebhook = async (url, username, password) => {
 };
 
 const checkWebhook = async (url, username, password) => {
-  console.log("check web ---------------------- " + url);
   const options = {
     method: "get",
     url: url + "/rest/webhooks/1.0/webhook",
@@ -273,16 +266,14 @@ const checkWebhook = async (url, username, password) => {
   };
   await axios(options)
     .then(function (responce) {
-      console.log("success");
       const webhooks = responce.data;
       let flag = false;
       webhooks.map((hook) => {
-        if (hook.url === "https://nameless-cove-12952.herokuapp.com/addIsuue") {
+        if (hook.url === "https://algoliaproject.herokuapp.com/addIsuue") {
           console.log(hook.url);
           flag = true;
         }
       });
-      console.log(flag);
       if (flag) console.log("web hook created already..");
       else {
         console.log("need to create");
