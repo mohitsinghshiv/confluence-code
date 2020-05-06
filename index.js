@@ -7,7 +7,6 @@ const rp = require("request-promise-native");
 var app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// parse application/json
 app.use(bodyParser.json());
 var port = process.env.PORT || 3000;
 const client = algoliasearch("1BG45YLJO5", "38a1d2a23ed5658bd4e874e45074a2ce");
@@ -15,12 +14,10 @@ const client = algoliasearch("1BG45YLJO5", "38a1d2a23ed5658bd4e874e45074a2ce");
 function confluenceGet(obj) {
   return rp({
     url: obj.host + "/rest/api/content",
-    // GET parameters
     qs: {
-      limit: 20, // number of item per page
-      orderBy: "history.lastUpdated", // sort them by last updated
+      limit: 20,
+      orderBy: "history.lastUpdated",
       expand: [
-        // fields to retrieve
         "history.lastUpdated",
         "ancestors.page",
         "descendants.page",
@@ -29,7 +26,6 @@ function confluenceGet(obj) {
       ].join(","),
     },
     headers: {
-      // auth headers
       Authorization: `Basic ${Buffer.from(
         `${obj.username}:${obj.password}`
       ).toString("base64")}`,
@@ -216,6 +212,106 @@ app.get("/a", async function (req, res) {
     });
 });
 
+app.post("/auth", async function (req, res) {
+  const url = req.body.url;
+  const username = req.body.username;
+  const password = req.body.password;
+  const options = {
+    method: "GET",
+    url: url + "/rest/api/3/project",
+    auth: { username: username, password: password },
+    headers: { Accept: "application/json" },
+  };
+  await axios(options)
+    .then(function (responce) {
+      console.log("success");
+      checkWebhook(url, username, password);
+      return res.status(200).json({ greeting: "success" });
+    })
+    .catch(function (err) {
+      return res.status(400).json({ greeting: "error" });
+    });
+});
+
+const createWebhook = async (url, username, password) => {
+  console.log("create web -" + username);
+  const data = {
+    name: "This is default webhook ",
+    url: "https://nameless-cove-12952.herokuapp.com/addIsuue",
+    events: ["jira:issue_created", "jira:issue_updated"],
+    jqlFilter: "Project = JRA AND resolution = Fixed",
+    excludeIssueDetails: false,
+  };
+
+  const options = {
+    method: "post",
+    url: url + "/rest/webhooks/1.0/webhook",
+    auth: { username: username, password: password },
+
+    headers: { Accept: "application/json" },
+    data: data,
+  };
+  await axios(options)
+    .then(function (responce) {
+      console.log("success");
+    })
+    .catch(function (err) {
+      console.log("error");
+    });
+};
+
+const checkWebhook = async (url, username, password) => {
+  console.log("check web ---------------------- " + url);
+  const options = {
+    method: "get",
+    url: url + "/rest/webhooks/1.0/webhook",
+    auth: { username: username, password: password },
+    headers: { Accept: "application/json" },
+  };
+  await axios(options)
+    .then(function (responce) {
+      console.log("success");
+      const webhooks = responce.data;
+      let flag = false;
+      webhooks.map((hook) => {
+        if (hook.url === "https://nameless-cove-12952.herokuapp.com/addIsuue") {
+          console.log(hook.url);
+          flag = true;
+        }
+      });
+      console.log(flag);
+      if (flag) console.log("web hook created already..");
+      else {
+        console.log("need to create");
+        createWebhook(url, username, password);
+      }
+    })
+    .catch(function (err) {
+      console.log("error");
+    });
+};
+
+//--------
+app.post("/addIsuue", (req, res) => {
+  console.log("add issue");
+  const projects = req.body;
+  const record = {};
+  record.IssueId = projects.issue.id;
+  record.ProjectName = projects.issue.fields.project.name;
+  record.Issue = projects.issue;
+  record.Summary = projects.issue.fields.summary;
+  record.Description = projects.issue.fields.description;
+  record.Project = projects.issue.fields.project;
+  record.objectID = projects.issue.id;
+
+  const records = [record];
+  console.log(records);
+  const index = client.initIndex("Isses_NAME");
+  console.log("index----", index);
+  const x = index.saveObjects(records);
+  console.log("----", x);
+});
+
 app.listen(port, function () {
-  console.log(`Example app listening on port !`);
+  console.log(`Example app listening on port ! ${port}`);
 });
